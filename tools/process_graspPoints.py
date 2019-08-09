@@ -17,7 +17,7 @@ gripper_in_wrist_frame = np.array([
                         [0, 0.8186398, -0.5743073, 0],
                         [0, 0.5743073,  0.8186398, 0],
                         [0, 0, 0, 1]])
-                        
+
 eef_in_gripper_frame = np.array([
                     [0.7071068,  0, 0.7071068, 25],
                     [0.50, -0.7071068, -0.5, -15],
@@ -206,7 +206,7 @@ def main(xml_file_name_grasp_points, file_name_save):
 xml_file_name_grasp_points="../qibullet/graspPoints_data/XML/1grasp_points.xml"
 file_name_save="1grasp_points"
 
-# main(xml_file_name_grasp_points, file_name_save)
+main(xml_file_name_grasp_points, file_name_save)
 
 # old grasp point
 grasp_tabasco = np.array([
@@ -223,4 +223,4 @@ grasp_tabasco = np.array([
 
 
 
-print("New grasp:", tabascoToQibullet(grasp_tabasco))
+# print("New grasp:", tabascoToQibullet(grasp_tabasco))
