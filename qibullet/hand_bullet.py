@@ -451,15 +451,15 @@ def quaternion_to_euler(x, y, z, w):
 start_all = time.time()
 
 object_file = "cube_grasping.urdf"
-grasp_points_path_file_simox = "../qibullet/graspPoints_data/JSON/graspPoints_"+
-"simoxCgal/1318grasp_points_RGripper.json"
+grasp_points_path_file_simox = "../qibullet/graspPoints_data/JSON/graspPoints_"\
++"simoxCgal/1318grasp_points_RGripper.json"
 # grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/graspPoints_"+"\
 # qibullet/grasp_qibullet_1318grasp_points_RGripper.json"
 min_quality = 0
 min_time = 1
 
 mainGripper(object_file, grasp_points_path_file_simox, min_time, min_quality,
-True)
+False)
 
 # grasp_points = [[[-0.07302517, -0.04576785, 0.02571655], [0.044, 0.029, 0.242, 0.969]]]
 # gripper_name = "rGripper"
