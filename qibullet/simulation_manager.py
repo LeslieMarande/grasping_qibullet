@@ -9,7 +9,6 @@ from qibullet.laser import Laser
 from qibullet.camera import Camera
 from qibullet.nao_virtual import NaoVirtual
 from qibullet.pepper_virtual import PepperVirtual
-from qibullet.pepperGripper_virtual import PepperGripperVirtual
 from qibullet.robot_module import RobotModule
 
 
@@ -87,8 +86,8 @@ class SimulationManager:
             the X, Y, and Z axis in the world frame, in meters
         """
         try:
-            assert isinstance(position, list)
-            assert len(position) == 3
+            assert isinstance(light_position, list)
+            assert len(light_position) == 3
 
             pybullet.configureDebugVisualizer(
                 lightPosition=light_position,
@@ -131,44 +130,6 @@ class SimulationManager:
             physicsClientId=physics_client)
 
         return pepper_virtual
-
-    def spawnGripperPepper(
-            self,
-            gripper,
-            physics_client,
-            translation=[0, 0, 0.5],
-            quaternion=[0, 0, 0, 1],
-            spawn_ground_plane=False,
-            useFixedBase=False):
-        """
-        Loads a Pepper gripper's model in the simulation
-
-        Parameters:
-            physics_client - The id of the simulated instance in which the
-            robot is supposed to be spawned
-            translation - List containing 3 elements, the spawning translation
-            [x, y, z] in the WORLD frame
-            quaternions - List containing 4 elements, the spawning rotation as
-            a quaternion [x, y, z, w] in the WORLD frame
-            spawn_ground_plane - If True, the pybullet_data ground plane will
-            be spawned
-
-        Returns:
-            pepper_virtual - A PepperVirtual object, the Pepper simulated
-            instance
-        """
-        pepperGripper_virtual = PepperGripperVirtual(gripper)
-
-        if spawn_ground_plane:
-            self._spawnGroundPlane(physics_client)
-
-        pepperGripper_virtual.loadRobot(
-            translation,
-            quaternion,
-            physicsClientId=physics_client,
-            useFixedBase=useFixedBase)
-
-        return pepperGripper_virtual
 
     def spawnNao(
             self,

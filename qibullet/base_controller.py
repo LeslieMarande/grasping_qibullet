@@ -316,14 +316,13 @@ class PepperBaseController(BaseController):
         INTERNAL METHOD, update the robot's constraint.
         """
         # Change the constraint to the requested position and orientation
-        if self.motion_constraint:
-            pybullet.changeConstraint(
-                self.motion_constraint,
-                self.pose_goal["position"],
-                jointChildFrameOrientation=pybullet.getQuaternionFromEuler(
-                    self.pose_goal["orientation"]),
-                maxForce=self.force,
-                physicsClientId=self.physics_client)
+        pybullet.changeConstraint(
+            self.motion_constraint,
+            self.pose_goal["position"],
+            jointChildFrameOrientation=pybullet.getQuaternionFromEuler(
+                self.pose_goal["orientation"]),
+            maxForce=self.force,
+            physicsClientId=self.physics_client)
 
     def _initProcess(self):
         """
@@ -419,6 +418,7 @@ class PepperBaseController(BaseController):
             if translation_distance < self.linear_threshold and\
                     rotation_distance < self.angular_threshold:
                 break
+
             actual_pos, actual_orn = pybullet.getBasePositionAndOrientation(
                 self.robot_model,
                 physicsClientId=self.physics_client)

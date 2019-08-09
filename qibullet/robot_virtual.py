@@ -27,7 +27,7 @@ class RobotVirtual:
         self.joint_dict = dict()
         self.link_dict = dict()
 
-    def loadRobot(self, translation, quaternion, physicsClientId=0, useFixedBase=False):
+    def loadRobot(self, translation, quaternion, physicsClientId=0):
         """
         Loads the robot into a simulation, loads the joints and the links
         descriptions. The joints are set to 0 rad
@@ -49,7 +49,7 @@ class RobotVirtual:
                 self.description_file,
                 translation,
                 quaternion,
-                useFixedBase=useFixedBase,
+                useFixedBase=False,
                 globalScaling=1.0,
                 physicsClientId=self.physics_client,
                 flags=pybullet.URDF_USE_SELF_COLLISION |
