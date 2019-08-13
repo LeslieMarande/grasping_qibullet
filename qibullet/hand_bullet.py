@@ -17,13 +17,15 @@ def mainGripper(object_file, grasp_points_path_file, min_time, min_quality,\
 saving=True):
     """
     The end-effector tries to grasp the fixed object using physic properties,
-    each grasp point is evaluate and all great ones are stocked in a file with its quality.
+    each grasp point is evaluate and all great ones are stocked in a file
+    with its quality.
 
     Parameters:
         object_file - the object's urdf file in the folder object_data
-        grasp_points_path_file - The path to the JSON file containing the valid grasp points
-        min_time - the minimum time the object has not to fall to concider
-        the grasp great
+        grasp_points_path_file - The path to the JSON file containing the valid
+        grasp points
+        min_time - the minimum time the object has
+        not to fall to concider the grasp great
         min_quality - the minimum quality required to consider
         a grasp point great
     """
@@ -31,11 +33,7 @@ saving=True):
     file = json.loads(f.read())
     f.close()
     gripper_name = file["parameters"]["gripper"]
-    if gripper_name == "RGripper":
-        gripper_name = "rGripper"
-    elif gripper_name == "LGripper":
-        gripper_name = "lGripper"
-    else:
+    if not (gripper_name == "rGripper" or gripper_name == "lGripper"):
         print("Error: No such gripper")
         return
 
@@ -224,14 +222,14 @@ grasp_points_file = None, saving=False):
         pivot = np.array([np.array([0,0,0]), np.array([0,0,0,0])])
 
         ### Need to repete the same grasp and average the quality
-        ### because the physic is not perfect
+        ### because the physic is not perfect, not always the same
         repetition = 3
         for _ in range(repetition):
             object_constraint = p.createConstraint(object, -1, -1, -1,\
             p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1])
             p.resetBasePositionAndOrientation(object,[0,0,1],[0,0,0,1])
-            p.resetBasePositionAndOrientation(pepper_gripper.robot_model,[0,0,0.5],\
-            [0,0,0,1])
+            p.resetBasePositionAndOrientation(pepper_gripper.robot_model,\
+            [0,0,0.5],[0,0,0,1])
             grasp_done = oneGrasp(object, object_constraint, pepper_gripper,\
             gripper_name, grasp, min_time)
             quality += grasp_done[0]
@@ -264,13 +262,14 @@ grasp_points_file = None, saving=False):
         # "grasp_qibullet__"+grasp_points_file+".json","w")
         f.write(json.dumps(great_grasps))
         f.close()
-        print("File saved:","../qibullet/graspPoints_data/JSON/graspPoints_qibullet/"+
-        "grasp_qibullet_"+grasp_points_file+".json")
+        print("File saved:","../qibullet/graspPoints_data/JSON/"+
+        "graspPoints_qibullet/grasp_qibullet_"+grasp_points_file+".json")
     print("All grasp done, saved done")
-    time.sleep(15)
+    time.sleep(3)
     return
 
-def evaluteGrasp(initial_distance_object_endeffector, final_distance_object_endeffector):
+def evaluteGrasp(initial_distance_object_endeffector,\
+ final_distance_object_endeffector):
     """
     Evaluation of the grasp concidering only if the object is still in the hand
     or not after rasing it
@@ -285,7 +284,8 @@ def evaluteGrasp(initial_distance_object_endeffector, final_distance_object_ende
     quality - the quality depends on the position of the object
     """
     precision = 0.005
-    if final_distance_object_endeffector - precision > initial_distance_object_endeffector:
+    if final_distance_object_endeffector - precision > \
+    initial_distance_object_endeffector:
         # print("Grasp failed")
         quality = 0
     else:
@@ -447,22 +447,27 @@ def quaternion_to_euler(x, y, z, w):
 
         return X, Y, Z
 
+if __name__ == "__main__":
+    start_all = time.time()
 
-start_all = time.time()
+    object_file = "cube_grasping.urdf"
+    # grasp_points_path_file_simox = "../qibullet/graspPoints_data/JSON/graspPoints_"\
+    # +"simoxCgal/1318grasp_points_rGripper.json"
+    grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/"+\
+    "graspPoints_qibullet/grasp_qibullet_1318grasp_points_rGripper.json"
+    min_quality = 1
+    min_time = 1
 
-object_file = "cube_grasping.urdf"
-grasp_points_path_file_simox = "../qibullet/graspPoints_data/JSON/graspPoints_"\
-+"simoxCgal/1318grasp_points_RGripper.json"
-# grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/graspPoints_"+"\
-# qibullet/grasp_qibullet_1318grasp_points_RGripper.json"
-min_quality = 0
-min_time = 1
+    # object_file = "ball.urdf"
+    # grasp_points_path_file_simox = "../qibullet/graspPoints_data/JSON/graspPoints_"\
+    # +"simoxCgal/sphere48GraspPoints_rGripper.json"
+    # grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/"+\
+    # "graspPoints_qibullet/grasp_qibullet_sphere48GraspPoints_rGripper.json"
+    mainGripper(object_file, grasp_points_path_file_qibullet, min_time, min_quality,
+    False)
 
-mainGripper(object_file, grasp_points_path_file_simox, min_time, min_quality,
-False)
+    # grasp_points = [[[-0.07302517, -0.04576785, 0.02571655], [0.044, 0.029, 0.242, 0.969]]]
+    # gripper_name = "rGripper"
+    # grasping(object_file, gripper_name, grasp_points, min_time, min_quality)
 
-# grasp_points = [[[-0.07302517, -0.04576785, 0.02571655], [0.044, 0.029, 0.242, 0.969]]]
-# gripper_name = "rGripper"
-# grasping(object_file, gripper_name, grasp_points, min_time, min_quality)
-
-print("Duration:", time.time()-start_all)
+    print("Duration:", time.time()-start_all)
