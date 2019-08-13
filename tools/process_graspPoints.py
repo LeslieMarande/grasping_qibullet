@@ -80,6 +80,10 @@ def simoxMatrixTransformationToDict(file_path):
     unity = 1000.0
     for grasp in tree.xpath("/ManipulationObject/GraspSet"):
         end_effector = str(grasp.get("EndEffector"))
+        if end_effector == "RGripper":
+            end_effector = "rGripper"
+        elif end_effector == "LGripper":
+            end_effector = "lGripper"
         grasp_points["parameters"]["gripper"] = end_effector
 
     for grasp in tree.xpath("/ManipulationObject/GraspSet/Grasp"):
@@ -202,25 +206,28 @@ def main(xml_file_name_grasp_points, file_name_save):
 
     return
 
+if __name__ == "__main__":
+    xml_file_name_grasp_points="../qibullet/graspPoints_data/XML/1318grasp_points.xml"
+    file_name_save="1318grasp_points"
 
-xml_file_name_grasp_points="../qibullet/graspPoints_data/XML/1grasp_points.xml"
-file_name_save="1grasp_points"
+    # xml_file_name_grasp_points="../qibullet/graspPoints_data/XML/sphere48GraspPoints.xml"
+    # file_name_save="sphere48GraspPoints"
 
-main(xml_file_name_grasp_points, file_name_save)
+    main(xml_file_name_grasp_points, file_name_save)
 
-# old grasp point
-grasp_tabasco = np.array([
-                        [0.881007, -0.341898,  0.324806,  -0.051],
-                        [0.470714,  0.679377,  -0.561642,  -0.034],
-                        [-0.028662,  0.648166,  0.760017,  -0.005],
-                        [0, 0, 0, 1],])
+    # old grasp point
+    grasp_tabasco = np.array([
+                            [0.881007, -0.341898,  0.324806,  -0.051],
+                            [0.470714,  0.679377,  -0.561642,  -0.034],
+                            [-0.028662,  0.648166,  0.760017,  -0.005],
+                            [0, 0, 0, 1],])
 
-# grasp_tabasco = np.array([
-                            # [0.7823135169,  -0.484133327,  0.395716857,  -0.033456175],
-                            # [0.4102259212,  -0.08094618268,  -0.9100295363,  -0.0837517],
-                            # [0.4719021114,  0.8729570351,  0.1350768671,  -0.0082109],
-                            # [0,  0,  0,  1],])
+    # grasp_tabasco = np.array([
+                                # [0.7823135169,  -0.484133327,  0.395716857,  -0.033456175],
+                                # [0.4102259212,  -0.08094618268,  -0.9100295363,  -0.0837517],
+                                # [0.4719021114,  0.8729570351,  0.1350768671,  -0.0082109],
+                                # [0,  0,  0,  1],])
 
 
 
-# print("New grasp:", tabascoToQibullet(grasp_tabasco))
+    # print("New grasp:", tabascoToQibullet(grasp_tabasco))
