@@ -1,20 +1,13 @@
-import sys
-ros_path = '/opt/ros/kinetic/lib/python2.7/dist-packages'
-if ros_path in sys.path:
-    sys.path.remove(ros_path)
-
 import pybullet as p
 import numpy as np
 import json
-import cv2
 import time
 import tools
 from qibullet import SimulationManager
-from qibullet import PepperVirtual
-from numpy.linalg import inv
 
-def mainGripper(object_file, grasp_points_path_file, min_time, min_quality,\
-saving=True):
+
+def mainGripper(object_file, grasp_points_path_file, min_time, min_quality,
+                saving=True):
     """
     The end-effector tries to grasp the fixed object using physic properties,
     each grasp point is evaluate and all great ones are stocked in a file
@@ -29,7 +22,7 @@ saving=True):
         min_quality - the minimum quality required to consider
         a grasp point great
     """
-    f = open(grasp_points_path_file,"r")
+    f = open(grasp_points_path_file, "r")
     file = json.loads(f.read())
     f.close()
     gripper_name = file["parameters"]["gripper"]
@@ -42,16 +35,17 @@ saving=True):
     for grasp in all_grasp_points:
         pos = grasp[0]
         quaternion = grasp[1]
-        grasp_points.append([pos,quaternion])
+        grasp_points.append([pos, quaternion])
 
     print("--- Process all Grasp ---")
     grasp_points_file = grasp_points_path_file.split("/")[-1].split('.')[0]
     grasping(object_file, gripper_name, grasp_points, min_time, min_quality,
-    grasp_points_file, saving=saving)
+             grasp_points_file, saving=saving)
     return
 
+
 def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
-grasp_point, min_time):
+             grasp_point, min_time):
     """
     Grasp the object and raise it with one specific grasp point and evaluate it
     in a simulation already created
@@ -79,24 +73,26 @@ grasp_point, min_time):
     p.setGravity(0, 0, -10)
     p.setRealTimeSimulation(1)
 
-    pos=grasp_point[0]
-    quaternion=grasp_point[1]
+    pos = grasp_point[0]
+    quaternion = grasp_point[1]
 
-    cid = p.createConstraint(pepper_gripper.robot_model, -1, -1, -1, \
-    p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0.5])
+    cid = p.createConstraint(
+            pepper_gripper.robot_model, -1, -1, -1,
+            p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 0.5])
 
-    #reset position to avoid collision problems
-    p.resetBasePositionAndOrientation(pepper_gripper.robot_model,\
-    [0, 0, 0.5], [0,0,0,1])
+    # reset position to avoid collision problems
+    p.resetBasePositionAndOrientation(
+        pepper_gripper.robot_model,
+        [0, 0, 0.5], [0, 0, 0, 1])
     time.sleep(.01)
 
-    #Open the hand
+    # Open the hand
     pepper_gripper.setAngles(hand, 1, 0.8)
     time.sleep(.03)
 
-    ###Approache of the end-effector towards the object###
+    # Approache of the end-effector towards the object
     # print('Grasp tested:', grasp_point)
-    interval = 0.1 # start position
+    interval = 0.1  # start position
     current_x_pos = pos[0] + interval * np.sign(pos[0])
     current_y_pos = pos[1] + interval * np.sign(pos[1])
     current_z_pos = pos[2] + interval * np.sign(pos[2])
@@ -108,46 +104,49 @@ grasp_point, min_time):
     while 1:
         if not (abs(current_x_pos - pos[0]) < precision):
             # print("Move on x")
-            new_pos = moveOnOneAxe(0, cid, current_x_pos, [pos[0], \
-            current_y_pos, current_z_pos+1], quaternion)
+            new_pos = moveOnOneAxe(
+                0, cid, current_x_pos,
+                [pos[0], current_y_pos, current_z_pos+1], quaternion)
             current_x_pos = new_pos[0]
         else:
-            x_done=True
+            x_done = True
 
         if not (abs(current_y_pos - pos[1]) < precision):
             # print("Move on y")
-            new_pos = moveOnOneAxe(1, cid, current_y_pos, [current_x_pos, \
-            pos[1], current_z_pos+1], quaternion)
+            new_pos = moveOnOneAxe(1, cid, current_y_pos,
+                                   [current_x_pos, pos[1], current_z_pos+1],
+                                   quaternion)
             current_y_pos = new_pos[1]
         else:
-            y_done=True
+            y_done = True
 
         if not (abs(current_z_pos - pos[2]) < precision):
             # print("Move on z")
-            new_pos = moveOnOneAxe(2, cid, current_z_pos + 1, [current_x_pos, \
-            current_y_pos, pos[2]], quaternion)
+            new_pos = moveOnOneAxe(2, cid, current_z_pos + 1,
+                                   [current_x_pos, current_y_pos, pos[2]],
+                                   quaternion)
             current_z_pos = new_pos[2] - 1
-        else :
-            z_done=True
+        else:
+            z_done = True
 
         if (x_done and y_done and z_done):
-            #Close enough
+            # Close enough
             break
 
     time.sleep(.1)
 
-    #Close the hand
+    # Close the hand
     pepper_gripper.setAngles(hand, 0, 0.8)
     time.sleep(.3)
 
-    ###Evaluation of the grasp###
-    initial_distance_object_endeffector = tools.getDistance(\
-    p.getBasePositionAndOrientation(object)[0],\
-    p.getBasePositionAndOrientation(pepper_gripper.robot_model)[0])
+    # Evaluation of the grasp
+    initial_distance_object_endeffector = tools.getDistance(
+        p.getBasePositionAndOrientation(object)[0],
+        p.getBasePositionAndOrientation(pepper_gripper.robot_model)[0])
     p.removeConstraint(object_constraint)
     time.sleep(.3)
 
-    ###Raise the object###
+    # Raise the object
     # print("Try to raise the object ")
     current_z_pos = new_pos[2]
     start = time.time()
@@ -155,25 +154,26 @@ grasp_point, min_time):
         time.sleep(.01)
         p.setGravity(0, 0, -10)
         z_pivot = [new_pos[0], new_pos[1], current_z_pos]
-        p.changeConstraint(cid, z_pivot,\
-        jointChildFrameOrientation=quaternion, maxForce=10)
+        p.changeConstraint(cid, z_pivot,
+                           jointChildFrameOrientation=quaternion, maxForce=10)
         current_z_pos = current_z_pos + 0.002
     time.sleep(.01)
-    final_distance_object_endeffector = tools.getDistance(\
-    p.getBasePositionAndOrientation(object)[0],\
-    p.getBasePositionAndOrientation(pepper_gripper.robot_model)[0])
+    final_distance_object_endeffector = tools.getDistance(
+        p.getBasePositionAndOrientation(object)[0],
+        p.getBasePositionAndOrientation(pepper_gripper.robot_model)[0])
 
-    #Evaluation of the grasp point
-    quality=evaluteGrasp(initial_distance_object_endeffector,\
-     final_distance_object_endeffector)
+    # Evaluation of the grasp point
+    quality = evaluteGrasp(initial_distance_object_endeffector,
+                           final_distance_object_endeffector)
 
     p.removeConstraint(cid)
     new_pos[2] = new_pos[2] - 1
 
     return [quality, [new_pos, quaternion]]
 
+
 def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
-grasp_points_file = None, saving=False):
+             grasp_points_file=None, saving=False):
     """
     Run grasping and evalution on each grasp point in the file
 
@@ -213,32 +213,36 @@ grasp_points_file = None, saving=False):
     grasp_nb = 0
     actual_qualities = []
     for grasp in grasp_points:
-        pepper_gripper = simulation_manager.spawnGripperPepper(gripper_name,\
-        client, spawn_ground_plane=True)
+        pepper_gripper = simulation_manager.spawnGripperPepper(
+                            gripper_name,
+                            client, spawn_ground_plane=True)
 
-        print("-- New grasp:", grasp_nb,'--')
+        print("-- New grasp:", grasp_nb, '--')
         # print(grasp)
         quality = 0
-        pivot = np.array([np.array([0,0,0]), np.array([0,0,0,0])])
+        pivot = np.array([np.array([0, 0, 0]), np.array([0, 0, 0, 0])])
 
-        ### Need to repete the same grasp and average the quality
-        ### because the physic is not perfect, not always the same
+        # Need to repete the same grasp and average the quality
+        # because the physic is not perfect, not always the same
         repetition = 3
         for _ in range(repetition):
-            object_constraint = p.createConstraint(object, -1, -1, -1,\
-            p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1])
-            p.resetBasePositionAndOrientation(object,[0,0,1],[0,0,0,1])
-            p.resetBasePositionAndOrientation(pepper_gripper.robot_model,\
-            [0,0,0.5],[0,0,0,1])
-            grasp_done = oneGrasp(object, object_constraint, pepper_gripper,\
-            gripper_name, grasp, min_time)
+            object_constraint = p.createConstraint(
+                object, -1, -1, -1,
+                p.JOINT_FIXED, [0, 0, 0], [0, 0, 0], [0, 0, 1])
+            p.resetBasePositionAndOrientation(
+                object, [0, 0, 1], [0, 0, 0, 1])
+            p.resetBasePositionAndOrientation(
+                pepper_gripper.robot_model,
+                [0, 0, 0.5], [0, 0, 0, 1])
+            grasp_done = oneGrasp(object, object_constraint, pepper_gripper,
+                                  gripper_name, grasp, min_time)
             quality += grasp_done[0]
             pivot += grasp_done[1]
         quality /= repetition
         pivot = np.array(pivot) / repetition
         pivot = [list(pivot[0]), list(pivot[1])]
 
-        ###Need to remove and create again the model because of physic problems
+        # Need to remove and create again the model because of physic problems
         p.removeBody(pepper_gripper.robot_model)
 
         print("The grasp's quality is", float(quality))
@@ -246,7 +250,7 @@ grasp_points_file = None, saving=False):
         grasp_nb += 1
 
         if saving:
-            ###Save great grasp in a file###
+            # Save great grasp in a file
             quality = float(quality)
 
             if quality >= float(min_quality):
@@ -256,20 +260,22 @@ grasp_points_file = None, saving=False):
                 great_grasps["grasps"][quality].append(list(pivot))
 
     if saving:
-        f = open("../qibullet/graspPoints_data/JSON/graspPoints_qibullet/"+
-        "grasp_qibullet_"+grasp_points_file+".json","w")
+        f = open("../qibullet/graspPoints_data/JSON/graspPoints_qibullet/" +
+                 "grasp_qibullet_" + grasp_points_file + ".json", "w")
         # f = open("../qibullet/graspPoints_data/JSON/graspPoints_qibullet/"+
         # "grasp_qibullet__"+grasp_points_file+".json","w")
         f.write(json.dumps(great_grasps))
         f.close()
-        print("File saved:","../qibullet/graspPoints_data/JSON/"+
-        "graspPoints_qibullet/grasp_qibullet_"+grasp_points_file+".json")
+        print("File saved:", "../qibullet/graspPoints_data/JSON/" +
+              "graspPoints_qibullet/grasp_qibullet_" +
+              grasp_points_file + ".json")
     print("All grasp done, saved done")
     time.sleep(3)
     return
 
-def evaluteGrasp(initial_distance_object_endeffector,\
- final_distance_object_endeffector):
+
+def evaluteGrasp(initial_distance_object_endeffector,
+                 final_distance_object_endeffector):
     """
     Evaluation of the grasp concidering only if the object is still in the hand
     or not after rasing it
@@ -284,14 +290,15 @@ def evaluteGrasp(initial_distance_object_endeffector,\
     quality - the quality depends on the position of the object
     """
     precision = 0.005
-    if final_distance_object_endeffector - precision > \
-    initial_distance_object_endeffector:
+    if final_distance_object_endeffector - precision >\
+            initial_distance_object_endeffector:
         # print("Grasp failed")
         quality = 0
     else:
         # print("Grasp succed")
         quality = 1
     return quality
+
 
 def pickGraspPoints(path_file, min_quality):
     """
@@ -308,7 +315,7 @@ def pickGraspPoints(path_file, min_quality):
         concidering the quality
     """
     grasp_points = []
-    f = open(path_file,"r")
+    f = open(path_file, "r")
     file = json.loads(f.read())
 
     all_grasp_points = file['grasps']
@@ -317,8 +324,9 @@ def pickGraspPoints(path_file, min_quality):
         if float(quality) >= min_quality:
             for grasp in all_grasp_points[quality]:
                 grasp_points.append(grasp)
-    print("-------",len(grasp_points),"grasp points !")
+    print("-------", len(grasp_points), "grasp points !")
     return grasp_points
+
 
 def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
     """
@@ -336,7 +344,7 @@ def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
     """
     time.sleep(.01)
     p.setGravity(0, 0, -10)
-    step = 0.005 #step to go farword the object
+    step = 0.005  # step to go farword the object
     if axe == 0:
         current_pos = current_pos - step * np.sign(pos[0])
         pivot = [current_pos, pos[1], pos[2]]
@@ -349,12 +357,12 @@ def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
     else:
         print("Error: Not good number for axe, only 0, 1 or 2")
 
-    p.changeConstraint(cid, pivot,\
-    jointChildFrameOrientation=quaternion, maxForce=30)
+    p.changeConstraint(cid, pivot,
+                       jointChildFrameOrientation=quaternion, maxForce=30)
     time.sleep(.01)
     return pivot
 
-#Not finished
+# Not finished
 # def selectGraspPoints(grasp_points_path_file, min_quality, x_interval,
 #  y_interval, z_interval, roll_interval, pitch_interval, yaw_interval):
 #     """
@@ -429,6 +437,7 @@ def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
 #
 #     return valid_grasp_points
 
+
 def quaternion_to_euler(x, y, z, w):
 
         import math
@@ -453,8 +462,8 @@ if __name__ == "__main__":
     object_file = "cube_grasping.urdf"
     # grasp_points_path_file_simox = "../qibullet/graspPoints_data/JSON/graspPoints_"\
     # +"simoxCgal/1318grasp_points_rGripper.json"
-    grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/"+\
-    "graspPoints_qibullet/grasp_qibullet_1318grasp_points_rGripper.json"
+    grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/" +\
+        "graspPoints_qibullet/grasp_qibullet_1318grasp_points_rGripper.json"
     min_quality = 1
     min_time = 1
 
@@ -463,8 +472,8 @@ if __name__ == "__main__":
     # +"simoxCgal/sphere48GraspPoints_rGripper.json"
     # grasp_points_path_file_qibullet = "../qibullet/graspPoints_data/JSON/"+\
     # "graspPoints_qibullet/grasp_qibullet_sphere48GraspPoints_rGripper.json"
-    mainGripper(object_file, grasp_points_path_file_qibullet, min_time, min_quality,
-    False)
+    mainGripper(object_file,
+                grasp_points_path_file_qibullet, min_time, min_quality, False)
 
     # grasp_points = [[[-0.07302517, -0.04576785, 0.02571655], [0.044, 0.029, 0.242, 0.969]]]
     # gripper_name = "rGripper"
