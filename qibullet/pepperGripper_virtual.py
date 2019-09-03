@@ -3,10 +3,7 @@
 
 import os
 import pybullet
-from qibullet.laser import *
-from qibullet.camera import *
-from qibullet.base_controller import *
-from qibullet.robot_posture import PepperPosture
+from qibullet.base_controller import PepperBaseController
 from qibullet.robot_virtual import RobotVirtual
 
 
@@ -20,12 +17,12 @@ class PepperGripperVirtual(RobotVirtual):
     FRAME_WORLD = 1
     FRAME_ROBOT = 2
 
-    def __init__(self,gripper):
+    def __init__(self, gripper):
         """
         Constructor
         """
-        urdf_path = "robot_data/pepper_1.7/pepper_"+gripper+".urdf"
-        RobotVirtual.__init__(self,urdf_path)
+        urdf_path = "robot_data/pepper_1.7/pepper_" + gripper + ".urdf"
+        RobotVirtual.__init__(self, urdf_path)
 
         self.camera_top = None
         self.camera_bottom = None
@@ -40,7 +37,8 @@ class PepperGripperVirtual(RobotVirtual):
         # Default acc (in rad/s^2 theta : 0.75, min : 0.1, max : 3.0
         self.angular_acceleration = 0.3
 
-    def loadRobot(self, translation, quaternion, physicsClientId=0, useFixedBase=False):
+    def loadRobot(self, translation, quaternion, physicsClientId=0,
+                  useFixedBase=False):
         """
         Overloads @loadRobot from the @RobotVirtual class. Update max velocity
         for the fingers and thumbs, based on the hand joints. Add self
@@ -132,7 +130,6 @@ class PepperGripperVirtual(RobotVirtual):
         """
         self.base_controller.move(x, y, theta)
 
-
     def setAngles(self, joint_names, joint_values, percentage_speed):
         """
         Overloads @setAngles from the @RobotVirtual class. Handles the finger
@@ -219,7 +216,7 @@ class PepperGripperVirtual(RobotVirtual):
         if len(joint_positions) == 1:
             return joint_positions.pop()
         else:
-            return joint_position
+            return joint_positions
 
     def isSelfColliding(self, link_names):
         """
