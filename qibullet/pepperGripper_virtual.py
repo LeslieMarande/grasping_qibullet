@@ -2,9 +2,14 @@
 # coding: utf-8
 
 import os
+import sys
 import pybullet
 from qibullet.base_controller import PepperBaseController
 from qibullet.robot_virtual import RobotVirtual
+from qibullet.link import Link
+from qibullet.joint import Joint
+
+IS_VERSION_PYTHON_3 = sys.version_info[0] >= 3
 
 
 class PepperGripperVirtual(RobotVirtual):
@@ -50,12 +55,49 @@ class PepperGripperVirtual(RobotVirtual):
             os.path.dirname(os.path.realpath(__file__)),
             physicsClientId=physicsClientId)
 
-        RobotVirtual.loadRobot(
-            self,
-            translation,
-            quaternion,
-            physicsClientId=physicsClientId,
-            useFixedBase=useFixedBase)
+        try:
+            self.physics_client = physicsClientId
+            self.robot_model = pybullet.loadURDF(
+                self.description_file,
+                translation,
+                quaternion,
+                useFixedBase=useFixedBase,
+                globalScaling=1.0,
+                physicsClientId=self.physics_client,
+                flags=pybullet.URDF_USE_SELF_COLLISION |
+                pybullet.URDF_USE_MATERIAL_COLORS_FROM_MTL)
+
+        except pybullet.error as e:
+            raise pybullet.error("Cannot load robot model: " + str(e))
+
+        for i in range(pybullet.getNumJoints(
+                self.robot_model,
+                physicsClientId=self.physics_client)):
+            if IS_VERSION_PYTHON_3:
+                # PYTHON 3 version needs a conversion bytes to str
+                joint_info = pybullet.getJointInfo(
+                    self.robot_model,
+                    i,
+                    physicsClientId=self.physics_client)
+                self.link_dict[joint_info[12].decode('utf-8')] =\
+                    Link(joint_info)
+
+                if joint_info[2] == pybullet.JOINT_PRISMATIC or\
+                        joint_info[2] == pybullet.JOINT_REVOLUTE:
+                    self.joint_dict[joint_info[1].decode('utf-8')] =\
+                        Joint(joint_info)
+            else:
+                # PYTHON 2 Version
+                joint_info = pybullet.getJointInfo(
+                    self.robot_model,
+                    i,
+                    physicsClientId=self.physics_client)
+
+                self.link_dict[joint_info[12]] = Link(joint_info)
+
+                if joint_info[2] == pybullet.JOINT_PRISMATIC or\
+                        joint_info[2] == pybullet.JOINT_REVOLUTE:
+                    self.joint_dict[joint_info[1]] = Joint(joint_info)
 
         for name, link in self.link_dict.items():
             for wrist in ["r_wrist", "l_wrist"]:
@@ -76,19 +118,6 @@ class PepperGripperVirtual(RobotVirtual):
             elif 'LFinger' in joint_name or 'LThumb' in joint_name:
                 self.joint_dict[joint_name].setMaxVelocity(
                     self.joint_dict["LHand"].getMaxVelocity())
-
-        # self.motion_constraint = pybullet.createConstraint(
-        #     parentBodyUniqueId=self.robot_model,
-        #     parentLinkIndex=-1,
-        #     childBodyUniqueId=-1,
-        #     childLinkIndex=-1,
-        #     jointType=pybullet.JOINT_FIXED,
-        #     jointAxis=[0, 0, 0],
-        #     parentFramePosition=[0, 0, 0.5],
-        #     parentFrameOrientation=[0, 0, 0, 1],
-        #     childFramePosition=[translation[0], translation[1], 0.5],
-        #     childFrameOrientation=quaternion,
-        #     physicsClientId=self.physics_client)
 
         self.base_controller = PepperBaseController(
             self.robot_model,
