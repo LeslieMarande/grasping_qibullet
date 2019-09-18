@@ -308,11 +308,11 @@ def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
                 great_grasps["grasps"][quality].append(list(pivot))
 
     if saving:
-        f = open(PATH_JSON +
+        f = open(process_gp.PATH_JSON +
                  "grasp_qibullet_" + grasp_points_file + ".json", "w")
         f.write(json.dumps(great_grasps))
         f.close()
-        print("File saved:", PATH_JSON +
+        print("File saved:", process_gp.PATH_JSON +
               "grasp_qibullet_" + grasp_points_file + ".json")
     print("All grasp done, saved done")
     time.sleep(3)
