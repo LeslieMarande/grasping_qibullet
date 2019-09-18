@@ -9,10 +9,6 @@ from os import path
 import tools.process_graspPoints as process_gp
 import qibullet.tools as qibullet_tools
 
-PATH_DATA = "data/"
-PATH_JSON = PATH_DATA + "JSON/"
-PATH_XML = PATH_DATA + "XML/"
-
 
 class PointGraspSimulationManager(SimulationManager):
     def __init__(self):
@@ -412,26 +408,41 @@ def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Get all grasp points of a ' +
                                      'xml file and save it on a json file')
-    parser.add_argument('--file_name',
+    parser.add_argument('--dataset',
                         type=str,
                         default=None,
-                        help='name a the xml file')
+                        help='name of the grasp point dataset, a xml file')
+    parser.add_argument('--object',
+                        type=str,
+                        default=None,
+                        help='name of the object model file, an urdf file')
+
+    parser.add_argument('--output_file_name',
+                        type=str,
+                        default="dataset",
+                        help='name of the output file, a json file')
 
     args = parser.parse_args()
-    if args.file_name is None or not path.exists(
-            process_gp.PATH_XML + args.file_name + ".xml"):
+    if args.dataset is None or not path.exists(
+            process_gp.PATH_XML + args.dataset + ".xml"):
         print("Error: you need to give an available xml file with " +
-              "the variable --file_name")
+              "the variable --dataset")
         raise NameError('xml file unvalid')
+    if args.object is None or not path.exists(
+            process_gp.PATH_OBJECT_DATA + args.object + ".urdf"):
+        print("Error: you need to give an available urdf file with " +
+              "the variable --object")
+        raise NameError('urdf file unvalid')
     xml_file_name_grasp_points =\
-        process_gp.PATH_XML + args.file_name + ".xml"
+        process_gp.PATH_XML + args.dataset + ".xml"
 
-    # process_gp.main(xml_file_name_grasp_points, args.file_name)
+    json_dataset = process_gp.main(xml_file_name_grasp_points,
+                                   args.output_file_name)
+
     start_all = time.time()
 
-    object_file = "cube_grasping.urdf"
-    grasp_points_path_file_qibullet = process_gp.PATH_JSON +\
-        args.file_name + "_rGripper.json"
+    object_file = args.object + ".urdf"
+    grasp_points_path_file_qibullet = process_gp.PATH_JSON + json_dataset
     min_quality = 0.5
     min_time = 1
 

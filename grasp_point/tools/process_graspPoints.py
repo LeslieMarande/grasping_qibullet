@@ -7,6 +7,7 @@ from numpy.linalg import inv
 PATH_DATA = "data/"
 PATH_JSON = PATH_DATA + "JSON/"
 PATH_XML = PATH_DATA + "XML/"
+PATH_OBJECT_DATA = PATH_DATA + "object_data/"
 
 # Matrix of transformation
 marker_in_center_frame = np.array([
@@ -213,7 +214,8 @@ def main(xml_file_name_grasp_points, file_name_save):
              grasp_points_quaternion["parameters"]['gripper']+".json", "w")
     f.write(json_grasp_points)
     f.close()
-    print("File created:", file_name_save + "_" +
-          grasp_points_quaternion["parameters"]['gripper']+".json")
+    name_file_saved = file_name_save + "_" +\
+        grasp_points_quaternion["parameters"]['gripper']+".json"
+    print("File created:", name_file_saved)
 
-    return
+    return name_file_saved
