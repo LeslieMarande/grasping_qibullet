@@ -26,7 +26,7 @@ class PepperGripperVirtual(RobotVirtual):
         """
         Constructor
         """
-        urdf_path = "../qibullet/robot_data/pepper_1.7/pepper_" +\
+        urdf_path = "robot_data/pepper_1.7/pepper_" +\
                     gripper + ".urdf"
         RobotVirtual.__init__(self, urdf_path)
 
