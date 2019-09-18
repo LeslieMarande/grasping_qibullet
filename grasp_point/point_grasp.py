@@ -424,7 +424,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     if args.dataset is None or not path.exists(
-            process_gp.PATH_XML + args.dataset + ".xml"):
+            process_gp.PATH_XML + args.dataset):
         print("Error: you need to give an available xml file with " +
               "the variable --dataset")
         raise NameError('xml file unvalid')
@@ -434,7 +434,7 @@ if __name__ == "__main__":
               "the variable --object")
         raise NameError('urdf file unvalid')
     xml_file_name_grasp_points =\
-        process_gp.PATH_XML + args.dataset + ".xml"
+        process_gp.PATH_XML + args.dataset
 
     json_dataset = process_gp.main(xml_file_name_grasp_points,
                                    args.output_file_name)
