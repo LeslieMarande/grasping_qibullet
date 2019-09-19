@@ -86,10 +86,6 @@ def simoxMatrixTransformationToDict(file_path):
     unity = 1000.0
     for grasp in tree.xpath("/ManipulationObject/GraspSet"):
         end_effector = str(grasp.get("EndEffector"))
-        if end_effector == "RGripper":
-            end_effector = "rGripper"
-        elif end_effector == "LGripper":
-            end_effector = "lGripper"
         grasp_points["parameters"]["gripper"] = end_effector
 
     for grasp in tree.xpath("/ManipulationObject/GraspSet/Grasp"):

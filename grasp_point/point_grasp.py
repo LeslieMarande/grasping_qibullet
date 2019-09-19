@@ -73,7 +73,7 @@ def mainGripper(object_file, grasp_points_path_file, min_time, min_quality,
     json_data = json.loads(f.read())
     f.close()
     gripper_name = json_data["parameters"]["gripper"]
-    if not (gripper_name == "rGripper" or gripper_name == "lGripper"):
+    if not (gripper_name == "RGripper" or gripper_name == "LGripper"):
         print("Error: No such gripper")
         return
 
@@ -101,7 +101,7 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
     Parameters:
         object - id of the object given by loadURDF
         object_constraint - the constraint created for the object
-        pepper_gripper - the gripper used (rGripper or lGripper)
+        pepper_gripper - the gripper used (RGripper or LGripper)
         grasp_point - the grasp point desired for the end-effector
         min_time - the minimum time in seconds the object has not to fall
         to concider the grasp valid
@@ -111,9 +111,9 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
         [new_pos, quaternion] - The real 6D pose reached
     """
     # print("Grasp test:", grasp_point)
-    if gripper_name == "rGripper":
+    if gripper_name == "RGripper":
         hand = "RHand"
-    elif gripper_name == "lGripper":
+    elif gripper_name == "LGripper":
         hand = "LHand"
     else:
         print("Error: No such gripper")
@@ -251,13 +251,12 @@ def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
 
     z_value = 1
     object = p.loadURDF(
-              "object_data/"+object_file,
+              process_gp.PATH_OBJECT_DATA + object_file,
               [0, 0, z_value],
               [0, 0, 0, 1],
               globalScaling=1.0)
     time.sleep(.02)
 
-    # time.sleep(15)
     grasp_nb = 0
     actual_qualities = []
     for grasp in grasp_points:
