@@ -139,17 +139,6 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
     pepper_gripper.resetAngles(hand, 1)
     time.sleep(.03)
 
-    # Approache of the end-effector towards the object
-    # print('Grasp tested:', grasp_point)
-    interval = 0.1  # start position
-    current_x_pos = pos[0] + interval * np.sign(pos[0])
-    current_y_pos = pos[1] + interval * np.sign(pos[1])
-    current_z_pos = pos[2] + interval * np.sign(pos[2])
-    precision = 0.0001
-
-    x_done = False
-    y_done = False
-    z_done = False
     pos[-1] += 1
     p.resetBasePositionAndOrientation(
         pepper_gripper.robot_model,
