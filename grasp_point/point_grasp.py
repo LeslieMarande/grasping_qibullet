@@ -9,6 +9,7 @@ from os import path
 import tools.process_graspPoints as process_gp
 import qibullet.tools as qibullet_tools
 
+MAX_FORCE = 1e9
 
 class PointGraspSimulationManager(SimulationManager):
     def __init__(self):
@@ -135,7 +136,7 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
     time.sleep(.01)
 
     # Open the hand
-    pepper_gripper.setAngles(hand, 1, 0.8)
+    pepper_gripper.resetAngles(hand, 1)
     time.sleep(.03)
 
     # Approache of the end-effector towards the object
@@ -149,39 +150,15 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
     x_done = False
     y_done = False
     z_done = False
-    while 1:
-        if not (abs(current_x_pos - pos[0]) < precision):
-            # print("Move on x")
-            new_pos = moveOnOneAxe(
-                0, cid, current_x_pos,
-                [pos[0], current_y_pos, current_z_pos+1], quaternion)
-            current_x_pos = new_pos[0]
-        else:
-            x_done = True
-
-        if not (abs(current_y_pos - pos[1]) < precision):
-            # print("Move on y")
-            new_pos = moveOnOneAxe(1, cid, current_y_pos,
-                                   [current_x_pos, pos[1], current_z_pos+1],
-                                   quaternion)
-            current_y_pos = new_pos[1]
-        else:
-            y_done = True
-
-        if not (abs(current_z_pos - pos[2]) < precision):
-            # print("Move on z")
-            new_pos = moveOnOneAxe(2, cid, current_z_pos + 1,
-                                   [current_x_pos, current_y_pos, pos[2]],
-                                   quaternion)
-            current_z_pos = new_pos[2] - 1
-        else:
-            z_done = True
-
-        if (x_done and y_done and z_done):
-            # Close enough
-            break
-
-    time.sleep(.1)
+    pos[-1] += 1
+    p.resetBasePositionAndOrientation(
+        pepper_gripper.robot_model,
+        pos, quaternion)
+    p.changeConstraint(cid, pos,
+                       jointChildFrameOrientation=quaternion,
+                       maxForce=MAX_FORCE)
+    new_pos = pos
+    time.sleep(.3)
 
     # Close the hand
     pepper_gripper.setAngles(hand, 0, 0.8)
@@ -203,7 +180,13 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
         p.setGravity(0, 0, -10)
         z_pivot = [new_pos[0], new_pos[1], current_z_pos]
         p.changeConstraint(cid, z_pivot,
-                           jointChildFrameOrientation=quaternion, maxForce=10)
+                           jointChildFrameOrientation=quaternion,
+                           maxForce=MAX_FORCE)
+        actual_distance = qibullet_tools.getDistance(
+            p.getBasePositionAndOrientation(object)[0],
+            p.getBasePositionAndOrientation(pepper_gripper.robot_model)[0])
+        if actual_distance > 0.20:
+            break
         current_z_pos = current_z_pos + 0.002
     time.sleep(.01)
     final_distance_object_endeffector = qibullet_tools.getDistance(
@@ -255,23 +238,23 @@ def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
               [0, 0, z_value],
               [0, 0, 0, 1],
               globalScaling=1.0)
+    pepper_gripper = simulation_manager.spawnGripperPepper(
+                            gripper_name,
+                            client, spawn_ground_plane=True)
     time.sleep(.02)
 
     grasp_nb = 0
     actual_qualities = []
     for grasp in grasp_points:
-        pepper_gripper = simulation_manager.spawnGripperPepper(
-                            gripper_name,
-                            client, spawn_ground_plane=True)
-
-        print("-- New grasp:", grasp_nb, '--')
+        print("-- New grasp: " + repr(grasp_nb) + ' on ' +
+            repr(len(grasp_points)) + " --")
         # print(grasp)
         quality = 0
         pivot = np.array([np.array([0, 0, 0]), np.array([0, 0, 0, 0])])
 
         # Need to repete the same grasp and average the quality
         # because the physic is not perfect, not always the same
-        repetition = 3
+        repetition = 1
         for _ in range(repetition):
             object_constraint = p.createConstraint(
                 object, -1, -1, -1,
@@ -288,9 +271,6 @@ def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
         quality /= repetition
         pivot = np.array(pivot) / repetition
         pivot = [list(pivot[0]), list(pivot[1])]
-
-        # Need to remove and create again the model because of physic problems
-        p.removeBody(pepper_gripper.robot_model)
 
         print("The grasp's quality is", float(quality))
         # print("Real grasp point done :", pivot)
@@ -339,7 +319,7 @@ def evaluteGrasp(initial_distance_object_endeffector,
         # print("Grasp failed")
         quality = 0
     else:
-        # print("Grasp succed")
+        # print("Grasp succeed")
         quality = 1
     return quality
 
@@ -386,7 +366,7 @@ def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
     """
     time.sleep(.01)
     p.setGravity(0, 0, -10)
-    step = 0.005  # step to go farword the object
+    step = 0.01  # step to go farword the object
     if axe == 0:
         current_pos = current_pos - step * np.sign(pos[0])
         pivot = [current_pos, pos[1], pos[2]]
@@ -400,7 +380,8 @@ def moveOnOneAxe(axe, cid, current_pos, pos, quaternion):
         print("Error: Not good number for axe, only 0, 1 or 2")
 
     p.changeConstraint(cid, pivot,
-                       jointChildFrameOrientation=quaternion, maxForce=30)
+                       jointChildFrameOrientation=quaternion,
+                       maxForce=MAX_FORCE)
     time.sleep(.01)
     return pivot
 

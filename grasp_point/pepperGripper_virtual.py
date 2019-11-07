@@ -211,6 +211,38 @@ class PepperGripperVirtual(RobotVirtual):
             values,
             speeds)
 
+    def resetAngles(self, joint_names, joint_values):
+        try:
+            if type(joint_names) is str:
+                assert type(joint_values) is int or type(joint_values) is float
+                names = [joint_names]
+                values = [joint_values]
+            else:
+                assert type(joint_names) is type(joint_values) is list
+                names = list(joint_names)
+                values = list(joint_values)
+
+        except AssertionError:
+            raise pybullet.error("Error in the parameters given to the\
+                setAngles method")
+
+        for hand in ["RHand", "LHand"]:
+            for i in range(names.count(hand)):
+                index = names.index(hand)
+                value = values[index]
+                names.pop(index)
+                values.pop(index)
+                finger_names, finger_values = self._mimicHand(hand, value)
+                names.extend(finger_names)
+                values.extend(finger_values)
+        for joint_name, joint_value in zip(names, values):
+            pybullet.resetJointState(
+                self.robot_model,
+                self.joint_dict[joint_name].getIndex(),
+                joint_value,
+                physicsClientId=self.physics_client
+            ) 
+
     def getAnglesPosition(self, joint_names):
         """
         Overloads @getAnglesPosition from the @RobotVirtual class. Handles the
@@ -235,13 +267,12 @@ class PepperGripperVirtual(RobotVirtual):
         for hand, finger in zip(
                 ["RHand", "LHand"],
                 ["RFinger11", "LFinger11"]):
-            for i in range(names.count(hand)):
-                index = names.index(hand)
-                joint_positions[index] =\
-                    RobotVirtual.getAnglesPosition(self, [finger]).pop() /\
-                    (1/(self.joint_dict[finger].getUpperLimit() -
-                        self.joint_dict[finger].getLowerLimit())) +\
-                    self.joint_dict[finger].getLowerLimit()
+            index = names.index(hand)
+            joint_positions[index] =\
+                RobotVirtual.getAnglesPosition(self, [finger]).pop() /\
+                (1/(self.joint_dict[finger].getUpperLimit() -
+                    self.joint_dict[finger].getLowerLimit())) +\
+                self.joint_dict[finger].getLowerLimit()
 
         if len(joint_positions) == 1:
             return joint_positions.pop()
