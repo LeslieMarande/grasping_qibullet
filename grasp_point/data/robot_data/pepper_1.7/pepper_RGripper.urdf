@@ -35,7 +35,7 @@
 <joint name="RHand" type="revolute">
   <parent link="r_wrist"/>
   <child link="r_gripper"/>
-  <origin rpy="0.6 0 0" xyz="0.025 0 0"/>
+  <origin rpy="0 0 0" xyz="0.025 0 0"/>
   <axis xyz="1.0 0 0"/>
   <limit effort="0.144" lower="0.02" upper="0.98" velocity="12.56"/>
 </joint>
@@ -45,11 +45,11 @@
     <inertia ixx="1.1e-09" ixy="0" ixz="0" iyy="1.1e-09" iyz="0" izz="1.1e-09"/>
   </inertial>
 </link>
-<!-- <joint name="RGripperEef" type="fixed">
+<joint name="RGripperEef" type="fixed">
   <parent link="r_gripper"/>
   <child link="r_eef"/>
-  <origin rpy="2.36 -0.785 0" xyz="0.025 -0.015 -0.025"/>
-  <axis xyz="1.0 0 0"/>
+  <origin rpy="3.14 -0.785 0" xyz="0.020 0 -0.005"/>
+  <axis xyz="0 0 0"/>
   <limit effort="0.144" lower="0.02" upper="0.98" velocity="12.56"/>
 </joint>
 <link name="r_eef">
@@ -57,7 +57,7 @@
     <mass value="2e-03"/>
     <inertia ixx="1.1e-09" ixy="0" ixz="0" iyy="1.1e-09" iyz="0" izz="1.1e-09"/>
   </inertial>
-</link> -->
+</link>
 <joint name="RHand/Touch/Back_sensor_fixedjoint" type="fixed">
   <parent link="r_wrist"/>
   <child link="RHandTouchBack_frame"/>
@@ -85,7 +85,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger41.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger41.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -112,7 +112,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger12.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger12.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -139,7 +139,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger31.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger31.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -166,7 +166,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger32.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger32.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -193,7 +193,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger22.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger22.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -220,7 +220,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger13.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger13.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -247,7 +247,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger21.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger21.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -274,7 +274,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger23.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger23.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -301,7 +301,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger11.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger11.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -328,7 +328,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger43.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger43.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -355,7 +355,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger42.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger42.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -382,7 +382,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RFinger33.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RFinger33.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -409,7 +409,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RThumb2.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RThumb2.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
@@ -436,7 +436,7 @@
   </visual>
   <collision>
     <geometry>
-      <mesh filename="meshes/RThumb1.dae" scale="0.1 0.1 0.1"/>
+      <mesh filename="meshes/RThumb1.obj" scale="0.1 0.1 0.1"/>
     </geometry>
     <origin rpy="-1.57 0 0" xyz="0 0 0"/>
   </collision>
