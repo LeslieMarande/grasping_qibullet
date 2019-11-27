@@ -8,6 +8,40 @@ import argparse
 from os import path
 import tools.process_graspPoints as process_gp
 import qibullet.tools as qibullet_tools
+from numpy.linalg import inv
+from scipy.spatial.transform import Rotation as R
+
+# Right hand
+r_right_hand = R.from_euler('xyz', [3.14, 0.0, 1.57])
+r_eef_in_wrist_frame = r_right_hand.as_dcm()
+r_eef_in_wrist_frame = np.append(r_eef_in_wrist_frame,
+                                np.array([[0,0,0]]),
+                                axis=0)
+r_eef_in_wrist_frame = np.append(r_eef_in_wrist_frame,
+                                np.array([
+                                    [0.07],
+                                    [0.0],
+                                    [-0.018],
+                                    [1]
+                                ]),
+                                axis=1)
+inv_r_wrist_in_eef_frame = inv(r_eef_in_wrist_frame)
+
+# Left hand
+l_right_hand = R.from_euler('xyz', [-3.14, 0.0, -1.57])
+l_eef_in_wrist_frame = l_right_hand.as_dcm()
+l_eef_in_wrist_frame = np.append(l_eef_in_wrist_frame,
+                                np.array([[0,0,0]]),
+                                axis=0)
+l_eef_in_wrist_frame = np.append(l_eef_in_wrist_frame,
+                                np.array([
+                                    [0.07],
+                                    [0.0],
+                                    [-0.018],
+                                    [1]
+                                ]),
+                                axis=1)
+inv_l_wrist_in_eef_frame = inv(l_eef_in_wrist_frame)
 
 MAX_FORCE = 1e9
 
@@ -78,17 +112,12 @@ def mainGripper(object_file, grasp_points_path_file, min_time, min_quality,
         print("Error: No such gripper")
         return
 
-    grasp_points = []
     all_grasp_points = pickGraspPoints(json_data, min_quality)
-    for grasp in all_grasp_points:
-        pos = grasp[0]
-        quaternion = grasp[1]
-        grasp_points.append([pos, quaternion])
     if len(all_grasp_points) is 0:
         raise NameError('no grasp points to process')
     print("--- Process all Grasp ---")
     grasp_points_file = grasp_points_path_file.split("/")[-1].split('.')[0]
-    grasping(object_file, gripper_name, grasp_points, min_time, min_quality,
+    grasping(object_file, gripper_name, all_grasp_points, min_time, min_quality,
              grasp_points_file, saving=saving)
     return
 
@@ -111,7 +140,6 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
         quality - the quality of the grasping
         [new_pos, quaternion] - The real 6D pose reached
     """
-    # print("Grasp test:", grasp_point)
     if gripper_name == "RGripper":
         hand = "RHand"
     elif gripper_name == "LGripper":
@@ -161,7 +189,6 @@ def oneGrasp(object, object_constraint, pepper_gripper, gripper_name,
     time.sleep(.3)
 
     # Raise the object
-    # print("Try to raise the object ")
     current_z_pos = new_pos[2]
     start = time.time()
     while time.time() - start < min_time:
@@ -237,7 +264,6 @@ def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
     for grasp in grasp_points:
         print("-- New grasp: " + repr(grasp_nb) + ' on ' +
             repr(len(grasp_points)) + " --")
-        # print(grasp)
         quality = 0
         pivot = np.array([np.array([0, 0, 0]), np.array([0, 0, 0, 0])])
 
@@ -262,7 +288,6 @@ def grasping(object_file, gripper_name, grasp_points, min_time, min_quality=0,
         pivot = [list(pivot[0]), list(pivot[1])]
 
         print("The grasp's quality is", float(quality))
-        # print("Real grasp point done :", pivot)
         grasp_nb += 1
 
         if saving:
@@ -305,10 +330,8 @@ def evaluteGrasp(initial_distance_object_endeffector,
     precision = 0.005
     if final_distance_object_endeffector - precision >\
             initial_distance_object_endeffector:
-        # print("Grasp failed")
         quality = 0
     else:
-        # print("Grasp succeed")
         quality = 1
     return quality
 
@@ -328,13 +351,35 @@ def pickGraspPoints(json_data, min_quality):
         concidering the quality
     """
     grasp_points = []
-
+    inv_wrist_in_eef_frame = inv_l_wrist_in_eef_frame
+    if json_data["parameters"]["gripper"] == "RGripper":
+        inv_wrist_in_eef_frame = inv_r_wrist_in_eef_frame
     all_grasp_points = json_data['grasps']
 
-    for quality in all_grasp_points:
+    for point_grasp in all_grasp_points:
+        quality = point_grasp[0]
         if float(quality) >= min_quality:
-            for grasp in all_grasp_points[quality]:
-                grasp_points.append(grasp)
+            r = R.from_quat(point_grasp[2])
+            eef_in_center_frame = r.as_dcm()
+            eef_in_center_frame = np.append(eef_in_center_frame,
+                                            np.array([[0,0,0]]),
+                                            axis=0)
+            eef_in_center_frame = np.append(eef_in_center_frame,
+                                            np.array([
+                                                [point_grasp[1][0]],
+                                                [point_grasp[1][1]],
+                                                [point_grasp[1][2]],
+                                                [1]
+                                            ]),
+                                            axis=1)
+            matrix_wrist_in_center_frame =\
+                np.matmul(eef_in_center_frame, inv_wrist_in_eef_frame)
+            pos = [float(matrix_wrist_in_center_frame[0][3]),
+                   float(matrix_wrist_in_center_frame[1][3]),
+                   float(matrix_wrist_in_center_frame[2][3])]
+            quaternion = process_gp.quaternionFromMatrix(
+                matrix_wrist_in_center_frame)
+            grasp_points.append([pos, quaternion])
     print("-------", len(grasp_points), "grasp points !")
     return grasp_points
 
@@ -412,7 +457,7 @@ if __name__ == "__main__":
 
     object_file = args.object + ".urdf"
     grasp_points_path_file_qibullet = process_gp.PATH_JSON + json_dataset
-    min_quality = 0.5
+    min_quality = 0.49
     min_time = 1
 
     mainGripper(object_file,

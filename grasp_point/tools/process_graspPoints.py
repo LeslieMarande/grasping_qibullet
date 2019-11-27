@@ -8,28 +8,7 @@ PATH_DATA = "data/"
 PATH_JSON = PATH_DATA + "JSON/"
 PATH_XML = PATH_DATA + "XML/"
 PATH_OBJECT_DATA = PATH_DATA + "object_data/"
-
-# Matrix of transformation
-marker_in_center_frame = np.array([
-                            [1.0, 0, 0, 0],
-                            [0, 1.0, 0, 0],
-                            [0, 0, 1.0, 30],
-                            [0, 0, 0, 1.0]])
-# Right hand
-gripper_in_wrist_frame = np.array([
-                        [1, 0, 0, 25],
-                        [0, 0.8186398, -0.5743073, 0],
-                        [0, 0.5743073,  0.8186398, 0],
-                        [0, 0, 0, 1]])
-
-eef_in_gripper_frame = np.array([
-                    [0.7071068,  0, 0.7071068, 25],
-                    [0.50, -0.7071068, -0.5, -15],
-                    [0.50,  0.7071068, -0.5, -25],
-                    [0, 0, 0, 1]])
-
-inv_wrist_in_eef_frame = inv(np.matmul(gripper_in_wrist_frame,
-                                       eef_in_gripper_frame))
+METRIC_TRESHOLD = 0.49
 
 
 def quaternionFromMatrix(matrix):
@@ -78,8 +57,9 @@ def simoxMatrixTransformationToDict(file_path):
     tree = etree.parse(file_path)
     grasp_points = {}
     grasp_points["parameters"] = {}
+    grasp_points["parameters"]["frame"] = "object_centroid"
     grasp_points["parameters"]["gripper"] = {}
-    grasp_points['grasps'] = {}
+    grasp_points['grasps'] = []
     end_effector = ""
     round_number = 3
     # Need milimeters
@@ -87,106 +67,45 @@ def simoxMatrixTransformationToDict(file_path):
     for grasp in tree.xpath("/ManipulationObject/GraspSet"):
         end_effector = str(grasp.get("EndEffector"))
         grasp_points["parameters"]["gripper"] = end_effector
-
+    count = 0
     for grasp in tree.xpath("/ManipulationObject/GraspSet/Grasp"):
         eef_in_center_frame = []
         quality = grasp.get("quality")
-        if float(quality) not in grasp_points['grasps'].keys():
-            grasp_points['grasps'][float(quality)] = []
-
-        tree_matrix = next(grasp.iter("TransformGlobalPose")).getchildren()[0]\
-            .getchildren()
-        eef_in_center_frame.append(
-            [round(float(tree_matrix[0].get("c1")), round_number),
-             round(float(tree_matrix[0].get("c2")), round_number),
-             round(float(tree_matrix[0].get("c3")), round_number),
-             round(float(tree_matrix[0].get("c4")), round_number)])
-
-        eef_in_center_frame.append(
-            [round(float(tree_matrix[1].get("c1")), round_number),
-             round(float(tree_matrix[1].get("c2")), round_number),
-             round(float(tree_matrix[1].get("c3")), round_number),
-             round(float(tree_matrix[1].get("c4")), round_number)])
-
-        eef_in_center_frame.append(
-            [round(float(tree_matrix[2].get("c1")), round_number),
-             round(float(tree_matrix[2].get("c2")), round_number),
-             round(float(tree_matrix[2].get("c3")), round_number),
-             round(float(tree_matrix[2].get("c4")), round_number)])
-
-        matrix_wrist_in_center_frame =\
-            np.matmul(eef_in_center_frame, inv_wrist_in_eef_frame)
-
-        pos = [round(float(matrix_wrist_in_center_frame[0][3])/unity,
-                     round_number),
-               round(float(matrix_wrist_in_center_frame[1][3])/unity,
-                     round_number),
-               round(float(matrix_wrist_in_center_frame[2][3])/unity,
-                     round_number)]
-
-        grasp_points['grasps'][float(quality)].append(
-            [pos, matrix_wrist_in_center_frame])
-
-    return grasp_points
-
-
-def graspPointsToQuaternion(grasp_points_rotation_matrix):
-    """
-    For all grasp point, change the rotate matrix to quaternion.
-    Stock the new dict in a JSON file.
-
-    Parameters:
-        grasp_points_rotation_matrix - Dict which contains the quality, the pos
-        and the transform matrix of each grasp points
-
-    Returns:
-        grasp_points_quaternion - Dict  which contains the quality, the pos and
-        the quaternion of each grasp points
-    """
-    grasp_points_quaternion = {}
-    grasp_points_quaternion["parameters"] = {}
-    grasp_points_quaternion["parameters"]["gripper"] =\
-        grasp_points_rotation_matrix["parameters"]['gripper']
-    grasp_points_quaternion["grasps"] = {}
-    qualities = grasp_points_rotation_matrix["grasps"].keys()
-    count = 0
-    for quality in qualities:
-        grasp_points = grasp_points_rotation_matrix["grasps"][quality]
-
-        if quality not in grasp_points_quaternion["grasps"].keys():
-            grasp_points_quaternion["grasps"][quality] = []
-
-        for grasp in grasp_points:
+        
+        if float(quality) > METRIC_TRESHOLD:
             count += 1
-            grasp_points_quaternion["grasps"][quality].append(
-                [grasp[0], quaternionFromMatrix(grasp[1])])
+            tree_matrix = next(grasp.iter("TransformGlobalPose")).getchildren()[0]\
+                .getchildren()
+            eef_in_center_frame.append(
+                [round(float(tree_matrix[0].get("c1")), round_number),
+                round(float(tree_matrix[0].get("c2")), round_number),
+                round(float(tree_matrix[0].get("c3")), round_number),
+                round(float(tree_matrix[0].get("c4")), round_number)])
+
+            eef_in_center_frame.append(
+                [round(float(tree_matrix[1].get("c1")), round_number),
+                round(float(tree_matrix[1].get("c2")), round_number),
+                round(float(tree_matrix[1].get("c3")), round_number),
+                round(float(tree_matrix[1].get("c4")), round_number)])
+
+            eef_in_center_frame.append(
+                [round(float(tree_matrix[2].get("c1")), round_number),
+                round(float(tree_matrix[2].get("c2")), round_number),
+                round(float(tree_matrix[2].get("c3")), round_number),
+                round(float(tree_matrix[2].get("c4")), round_number)])
+            
+            pos = [round(float(eef_in_center_frame[0][3])/unity,
+                        round_number),
+                round(float(eef_in_center_frame[1][3])/unity,
+                        round_number),
+                round(float(eef_in_center_frame[2][3])/unity,
+                        round_number)]
+            grasp_points['grasps'].append(
+                [float(quality), pos, quaternionFromMatrix(eef_in_center_frame)
+                ])
+    grasp_points['grasps'] = sorted(grasp_points["grasps"])
     print("-", count, "grasp points")
-    return grasp_points_quaternion
-
-
-def tabascoToQibullet(tabasco_grasp_point):
-    """
-    Transform a grasp point in tabasco referential in qibullet referential
-
-    Parameters:
-        tabasco_grasp_point - the 6D grasp point in tabasco referential
-
-    Returns:
-        qibullet_grasp_point - the 6D grasp point in qibullet referential
-    """
-    gripper_in_wrist_frame[:3, -1] *= 0.001
-
-    marker_in_center_frame[:3, -1] *= 0.001
-
-    gripper_in_marker_frame = tabasco_grasp_point
-    rWrist_in_gripper_frame = inv(gripper_in_wrist_frame)
-
-    transform_matrix = (marker_in_center_frame.dot(
-        gripper_in_marker_frame)).dot(rWrist_in_gripper_frame)
-    qibullet_grasp_point = quaternionFromMatrix(transform_matrix)
-
-    return [transform_matrix[:2, -1], qibullet_grasp_point]
-
+    return grasp_points
 
 def main(xml_file_name_grasp_points, file_name_save):
     """
@@ -200,18 +119,16 @@ def main(xml_file_name_grasp_points, file_name_save):
     """
     grasp_points_rotation_matrix = \
         simoxMatrixTransformationToDict(xml_file_name_grasp_points)
-    grasp_points_quaternion = \
-        graspPointsToQuaternion(grasp_points_rotation_matrix)
 
-    json_grasp_points = json.dumps(grasp_points_quaternion)
+    json_grasp_points = json.dumps(grasp_points_rotation_matrix)
 
     f = open(PATH_JSON +
              file_name_save + "_" +
-             grasp_points_quaternion["parameters"]['gripper']+".json", "w")
+             grasp_points_rotation_matrix["parameters"]['gripper']+".json", "w")
     f.write(json_grasp_points)
     f.close()
     name_file_saved = file_name_save + "_" +\
-        grasp_points_quaternion["parameters"]['gripper']+".json"
+        grasp_points_rotation_matrix["parameters"]['gripper']+".json"
     print("File created:", name_file_saved)
 
     return name_file_saved
